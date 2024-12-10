@@ -9,9 +9,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// GetHello возвращает случайное приветствие пользователю
-func (srv *Server) GetHello(e echo.Context) error {
-	msg, err := srv.uc.FetchHelloMessage()
+// GetQuery возвращает случайное приветствие пользователю
+func (srv *Server) GetQuery(e echo.Context) error {
+	msg, err := srv.uc.FetchQueryMessage()
 	if err != nil {
 		return e.String(http.StatusInternalServerError, err.Error())
 	}
@@ -19,10 +19,10 @@ func (srv *Server) GetHello(e echo.Context) error {
 	return e.JSON(http.StatusOK, msg)
 }
 
-// PostHello Помещает новый вариант приветствия в БД
-func (srv *Server) PostHello(e echo.Context) error {
+// PostQuery Помещает новый вариант приветствия в БД
+func (srv *Server) PostQuery(e echo.Context) error {
 	input := struct {
-		Msg *string `json:"msg"`
+		Msg *string `json:"name"`
 	}{}
 
 	err := e.Bind(&input)
@@ -31,14 +31,18 @@ func (srv *Server) PostHello(e echo.Context) error {
 	}
 
 	if input.Msg == nil {
-		return e.String(http.StatusBadRequest, "msg is empty")
+		return e.String(http.StatusBadRequest, "the 'name' field is missing")
+	}
+
+	if *input.Msg == "" {
+		return e.String(http.StatusBadRequest, "name is empty")
 	}
 
 	if len([]rune(*input.Msg)) > srv.maxSize {
-		return e.String(http.StatusBadRequest, "hello message too large")
+		return e.String(http.StatusBadRequest, "size name too large")
 	}
 
-	err = srv.uc.SetHelloMessage(*input.Msg)
+	err = srv.uc.SetQueryMessage(*input.Msg)
 	if err != nil {
 		if errors.Is(err, vars.ErrAlreadyExist) {
 			return e.String(http.StatusConflict, err.Error())
